@@ -1,0 +1,40 @@
+"
+
+# R summary script of the study 
+# "The effect of task-relevant and task-irrelevant novel stimuli on response behaviour
+
+#load data
+#data available on https://osf.io/7qv3j/
+#sort data; remove first trials 
+
+#accuracy data
+#optimizer to converge the model 
+library("optimx")
+nlopt <- function(par, fn, lower, upper, control) {
+  .nloptr <<- res <- nloptr(par, fn, lb = lower, ub = upper, 
+                            opts = list(algorithm = "NLOPT_LN_BOBYQA", print_level = 1,
+                                        maxeval = 1000, xtol_abs = 1e-6, ftol_abs = 1e-6))
+  list(par = res$solution,
+       fval = res$objective,
+       conv = if (res$status > 0) 0 else res$status,
+       message = res$message
+  )
+} 
+
+
+#run glmer accuracy data 
+acc_mixedmodel <- glmer(data$accuracy ~  (1 | subj) + novelty * action * SOA * expermiment, dataframe, family="binomial"(link="probit"), control=glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+#run lmer RT data 
+RT_mixedmodel <- lmer(data ~  (1 | subj) + novelty * action * SOA * experment, dataframe)
+
+#check results
+Anova(mixedmodel,type=3)
+
+#r squared (effect size)
+r.squaredGLMM(mixedmodel, null_model)
+
+
+#correlate TPQ and novelty
+corr_novelty_TPQ <- cor.test(novelty_data, TPQ_data, method=c("pearson"))
+
